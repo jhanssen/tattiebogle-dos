@@ -10,16 +10,6 @@
 
 extern "C" {
 #include <ATAIO.H>
-
-long SYSTEM_READ_TIMER( void )
-{
-    return clock();
-}
-
-int SYSTEM_WAIT_INTR_OR_TIMEOUT( void )
-{
-    return 0;
-}
 } // extern "C"
 
 static void pause( void )
