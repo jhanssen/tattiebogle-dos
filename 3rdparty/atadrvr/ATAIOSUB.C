@@ -23,6 +23,7 @@
 // the PIO and DMA command execution and trace functions.
 //********************************************************************
 
+#include <conio.h>
 #include <dos.h>
 
 #include "ataio.h"
@@ -310,7 +311,7 @@ unsigned char sub_readBusMstrCmd( void )
 
    if ( pio_bmide_base_addr < 0x0100 )
       return 0;
-   x = inportb(pio_bmide_base_addr + BM_COMMAND_REG );
+   x = inp(pio_bmide_base_addr + BM_COMMAND_REG );
    trc_llt( 0, x, TRC_LLT_R_BM_CR );
    return x;
 }
@@ -323,7 +324,7 @@ unsigned char sub_readBusMstrStatus( void )
 
    if ( pio_bmide_base_addr < 0x0100 )
       return 0;
-   x = inportb( pio_bmide_base_addr + BM_STATUS_REG );
+   x = inp( pio_bmide_base_addr + BM_STATUS_REG );
    trc_llt( 0, x, TRC_LLT_R_BM_SR );
    return x;
 }
@@ -336,7 +337,7 @@ void sub_writeBusMstrCmd( unsigned char x )
    if ( pio_bmide_base_addr < 0x0100 )
       return;
    trc_llt( 0, x, TRC_LLT_W_BM_CR );
-   outportb( pio_bmide_base_addr + BM_COMMAND_REG, x );
+   outp( pio_bmide_base_addr + BM_COMMAND_REG, x );
 }
 
 
@@ -347,7 +348,7 @@ void sub_writeBusMstrStatus( unsigned char x )
    if ( pio_bmide_base_addr < 0x0100 )
       return;
    trc_llt( 0, x, TRC_LLT_W_BM_SR );
-   outportb( pio_bmide_base_addr + BM_STATUS_REG, x );
+   outp( pio_bmide_base_addr + BM_STATUS_REG, x );
 }
 
 // end ataiosub.c

@@ -23,6 +23,7 @@
 // mastering READ/WRITE DMA commands for ATA and ATAPI.
 //********************************************************************
 
+#include <conio.h>
 #include <dos.h>
 
 #include "ataio.h"
@@ -260,9 +261,9 @@ static int set_up_xfer( int dir, long bc, unsigned int seg, unsigned int off )
    temp = FP_SEG( dma_pci_prd_ptr );
    temp = temp << 4;
    temp = temp + FP_OFF( dma_pci_prd_ptr );
-   outport( pio_bmide_base_addr + BM_PRD_ADDR_LOW,
+   outpw( pio_bmide_base_addr + BM_PRD_ADDR_LOW,
             (unsigned int) ( temp & 0x0000ffffL ) );
-   outport( pio_bmide_base_addr + BM_PRD_ADDR_HIGH,
+   outpw( pio_bmide_base_addr + BM_PRD_ADDR_HIGH,
             (unsigned int) ( ( temp & 0xffff0000L ) >> 16 ) );
 
    #if DEBUG_PCI & 0x02

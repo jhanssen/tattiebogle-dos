@@ -23,6 +23,7 @@
 // processing for ATA and ATAPI.
 //********************************************************************
 
+#include <conio.h>
 #include <dos.h>
 
 #include "ataio.h"
@@ -91,10 +92,10 @@ static int dmaTCbit;             // terminal count bit status
 #define DMA_MASK_ENABLE  0x00    // bits for enable/disable
 #define DMA_MASK_DISABLE 0x04
 
-#define enableChan()  outportb( 0xd4, DMA_MASK_ENABLE  | dmaChanSel )
-#define disableChan() outportb( 0xd4, DMA_MASK_DISABLE | dmaChanSel )
+#define enableChan()  outp( 0xd4, DMA_MASK_ENABLE  | dmaChanSel )
+#define disableChan() outp( 0xd4, DMA_MASK_DISABLE | dmaChanSel )
 
-#define clearFF() outportb( 0xd8, 0 )  // macro to reset flip-flop
+#define clearFF() outp( 0xd8, 0 )  // macro to reset flip-flop
                                        // so we access the low byte
                                        // of the address and word
                                        // count registers
@@ -218,7 +219,7 @@ static void prog_dma_chan( unsigned int page, unsigned long addr,
 
    // disable interrupts
 
-   disable();
+   _disable();
 
    // disable the dma channel
 
@@ -227,30 +228,30 @@ static void prog_dma_chan( unsigned int page, unsigned long addr,
 
    // reset channel status (required by some systems)
 
-   inportb( 0xd0 );
+   inp( 0xd0 );
 
    // set dma channel transfer address
 
    clearFF();
-   outportb( dmaAddrReg, (int) ( addr & 0x000000ffL ) );
+   outp( dmaAddrReg, (int) ( addr & 0x000000ffL ) );
    addr = addr >> 8;
-   outportb( dmaAddrReg, (int) ( addr & 0x000000ffL ) );
+   outp( dmaAddrReg, (int) ( addr & 0x000000ffL ) );
 
    // set dma channel page
 
-   outportb( dmaPageReg, page );
+   outp( dmaPageReg, page );
 
    // set dma channel word count
 
    count -- ;
    clearFF();
-   outportb( dmaCntrReg, (int) ( count & 0x000000ffL ) );
+   outp( dmaCntrReg, (int) ( count & 0x000000ffL ) );
    count = count >> 8;
-   outportb( dmaCntrReg, (int) ( count & 0x000000ffL ) );
+   outp( dmaCntrReg, (int) ( count & 0x000000ffL ) );
 
    // set dma channel mode
 
-   outportb( 0xd6, mode );
+   outp( 0xd6, mode );
 
    #if DEBUG_ISA & 0x01
       trc_llt( 0, mode, TRC_LLT_DEBUG );  // for debugging
@@ -263,7 +264,7 @@ static void prog_dma_chan( unsigned int page, unsigned long addr,
 
    // enable interrupts
 
-   enable();
+   _enable();
 }
 
 //***********************************************************
@@ -466,7 +467,7 @@ static int exec_isa_ata_cmd( int dev,
       trc_llt( 0, 0, TRC_LLT_DMA2 );
       while ( 1 )
       {
-         if ( inportb( 0xd0 ) & dmaTCbit )   // terminal count yet ?
+         if ( inp( 0xd0 ) & dmaTCbit )   // terminal count yet ?
             break;                           // yes - ok!
          if ( chk_cmd_done() )               // cmd done ?
          {
@@ -558,7 +559,7 @@ static int exec_isa_ata_cmd( int dev,
 
    if ( ( reg_cmd_info.ec == 0 )
         &&
-        ( ( inportb( 0xd0 ) & dmaTCbit ) == 0 )
+        ( ( inp( 0xd0 ) & dmaTCbit ) == 0 )
       )
    {
       reg_cmd_info.ec = 71;
@@ -573,8 +574,8 @@ static int exec_isa_ata_cmd( int dev,
    else
    {
       clearFF();
-      lw1 = inportb( dmaCntrReg );
-      lw2 = inportb( dmaCntrReg );
+      lw1 = inp( dmaCntrReg );
+      lw2 = inp( dmaCntrReg );
       lw1 = ( ( lw2 << 8 ) | lw1 ) + 1;
       lw1 = lw1 & 0x0000ffffL;
       reg_cmd_info.totalBytesXfer += ( count1 - lw1 ) << 1;
@@ -967,7 +968,7 @@ int dma_isa_packet( int dev,
       trc_llt( 0, 0, TRC_LLT_DMA2 );
       while ( 1 )
       {
-         if ( inportb( 0xd0 ) & dmaTCbit )   // terminal count yet ?
+         if ( inp( 0xd0 ) & dmaTCbit )   // terminal count yet ?
             break;                           // yes - ok!
          if ( chk_cmd_done() )               // cmd done ?
          {
@@ -1069,8 +1070,8 @@ int dma_isa_packet( int dev,
    // update total bytes transferred
 
    clearFF();
-   lw1 = inportb( dmaCntrReg );
-   lw2 = inportb( dmaCntrReg );
+   lw1 = inp( dmaCntrReg );
+   lw2 = inp( dmaCntrReg );
    lw1 = ( ( lw2 << 8 ) | lw1 ) + 1;
    lw1 = lw1 & 0x0000ffffL;
    reg_cmd_info.totalBytesXfer += ( count1 - lw1 ) << 1;

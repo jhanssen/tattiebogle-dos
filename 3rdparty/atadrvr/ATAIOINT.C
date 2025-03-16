@@ -23,7 +23,9 @@
 // interrupt handler functions.
 //********************************************************************
 
+#include <conio.h>
 #include <dos.h>
+#include <i86.h>
 
 #include "ataio.h"
 
@@ -57,7 +59,7 @@ volatile unsigned char int_ata_status;    // ATA status
 
 // interrupt handler function info...
 
-static void interrupt ( far * int_org_int_vect ) ();  // save area for the
+static void (interrupt far *int_org_int_vect ) ();  // save area for the
                                                       // system's INT vector
 
 static void far interrupt int_handler( void );        // our INT handler
@@ -81,7 +83,7 @@ static int int_shared = 0;          // shared flag
 
 #define PIC0_ENABLE_PIC1 0xFB    // mask to enable PIC1 in PIC0
 
-static pic_enable_irq[8] =       // mask to enable
+static unsigned char pic_enable_irq[8] =       // mask to enable
    { 0xFE, 0xFD, 0xFB, 0xF7,     //   IRQ 0-7 in PIC 0 or
      0xEF, 0xDF, 0xBF, 0x7F  };  //   IRQ 8-15 in PIC 1
 
@@ -143,7 +145,7 @@ int int_enable_irq( int shared, int irqNum,
    {
       int_int_vector = irqNum + 8;
       // In PIC0 change the IRQ 0-7 enable bit to 0
-      outportb( PIC0_MASK, ( inportb( PIC0_MASK )
+      outp( PIC0_MASK, ( inp( PIC0_MASK )
                          & pic_enable_irq[ irqNum ] ) );
    }
    else
@@ -151,8 +153,8 @@ int int_enable_irq( int shared, int irqNum,
       int_int_vector = 0x70 + ( irqNum - 8 );
       // In PIC0 change the PIC1 enable bit to 0 (enable IRQ 2)
       // In PIC1 change the IRQ enable bit to 0
-      outportb( PIC0_MASK, ( inportb( PIC0_MASK ) & PIC0_ENABLE_PIC1 ) );
-      outportb( PIC1_MASK, ( inportb( PIC1_MASK )
+      outp( PIC0_MASK, ( inp( PIC0_MASK ) & PIC0_ENABLE_PIC1 ) );
+      outp( PIC1_MASK, ( inp( PIC1_MASK )
                          & pic_enable_irq[ irqNum - 8 ] ) );
    }
 
@@ -189,9 +191,9 @@ void int_disable_irq( void )
       // Restore the system's interrupt vector.
       // Enable interrupts.
 
-      disable();
-      setvect( int_int_vector, int_org_int_vect );
-      enable();
+      _disable();
+      _dos_setvect( int_int_vector, int_org_int_vect );
+      _enable();
    }
 
    // Reset all the interrupt data.
@@ -224,12 +226,12 @@ void int_save_int_vect( void )
    // Disable interrupts.
    // Save the interrupt vector.
 
-   disable();
-   int_org_int_vect = getvect( int_int_vector );
+   _disable();
+   int_org_int_vect = _dos_getvect( int_int_vector );
 
    // install our interrupt handler
 
-   setvect( int_int_vector, int_handler );
+   _dos_setvect( int_int_vector, int_handler );
 
    // Our interrupt handler is installed now.
 
@@ -242,7 +244,7 @@ void int_save_int_vect( void )
 
    // Enable interrupts.
 
-   enable();
+   _enable();
 }
 
 //*************************************************************
@@ -270,9 +272,9 @@ void int_restore_int_vect( void )
    // Restore the interrupt vector.
    // Enable interrupts.
 
-   disable();
-   setvect( int_int_vector, int_org_int_vect );
-   enable();
+   _disable();
+   _dos_setvect( int_int_vector, int_org_int_vect );
+   _enable();
 
    // Our interrupt handler is not installed now.
 
@@ -300,7 +302,7 @@ static void far interrupt int_handler( void )
    {
       // PCI ATA controller...
       // ... read BMIDE status
-      int_bm_status = inportb( int_bmide_addr );
+      int_bm_status = inp( int_bmide_addr );
       //... check if Interrupt bit = 1
       if ( int_bm_status & BM_SR_MASK_INT )
       {
@@ -309,8 +311,8 @@ static void far interrupt int_handler( void )
          // ... read ATA status,
          // ... reset Interrupt bit.
          int_intr_flag ++ ;
-         int_ata_status = inportb( int_ata_addr );
-         outportb( int_bmide_addr, BM_SR_MASK_INT );
+         int_ata_status = inp( int_ata_addr );
+         outp( int_bmide_addr, BM_SR_MASK_INT );
       }
    }
    else
@@ -319,7 +321,7 @@ static void far interrupt int_handler( void )
       // ... increment interrupt flag,
       // ... read ATA status.
       int_intr_flag ++ ;
-      int_ata_status = inportb( int_ata_addr );
+      int_ata_status = inp( int_ata_addr );
    }
 
    // if interrupt is shared, jump to the original handler...
@@ -329,37 +331,44 @@ static void far interrupt int_handler( void )
 
       // pop all regs
 
-      asm pop   bp
-      asm pop   edi
-      asm pop   esi
-      asm pop   ds
-      asm pop   es
-      asm pop   edx
-      asm pop   ecx
-      asm pop   ebx
-      asm pop   eax
+       /*
+         _asm {
+         pop   bp
+         pop   edi
+         pop   esi
+         pop   ds
+         pop   es
+         pop   edx
+         pop   ecx
+         pop   ebx
+         pop   eax
 
-      // put cs:ip of next interrupt handler on stack
+         // put cs:ip of next interrupt handler on stack
 
-      asm push  ax            // will be bp+8
-      asm push  ax            // will be bp+6
-      asm push  ax
-      asm push  bp
-      asm push  ds
-      asm mov   bp,DGROUP
-      asm mov   ds,bp
-      asm mov   bp, sp
-      asm mov   ax, word ptr DGROUP:int_org_int_vect
-      asm mov   [bp+6], ax
-      asm mov   ax, word ptr DGROUP:int_org_int_vect+2
-      asm mov   [bp+8], ax
-      asm pop   ds
-      asm pop   bp
-      asm pop   ax
+         push  ax            // will be bp+8
+         push  ax            // will be bp+6
+         push  ax
+         push  bp
+         push  ds
+         mov   bp,DGROUP
+         mov   ds,bp
+         mov   bp, sp
+         mov   ax, word ptr DGROUP:int_org_int_vect
+         mov   [bp+6], ax
+         mov   ax, word ptr DGROUP:int_org_int_vect+2
+         mov   [bp+8], ax
+         pop   ds
+         pop   bp
+         pop   ax
 
-      // jump to the original interrupt handler
+         // jump to the original interrupt handler
 
-      asm retf
+         retf
+         }
+       */
+
+       _chain_intr(int_org_int_vect);
+       return;
 
       // never get here
 
@@ -368,9 +377,9 @@ static void far interrupt int_handler( void )
    // interrupt is not shared...
    // send End-of-Interrupt (EOI) to the interrupt controller(s).
 
-   outportb( PIC0_CTRL, PIC_EOI );
+   outp( PIC0_CTRL, PIC_EOI );
    if ( int_irq_number >= 8 )
-      outportb( PIC1_CTRL, PIC_EOI );
+      outp( PIC1_CTRL, PIC_EOI );
 
    // IRET here (return from interrupt)
 }

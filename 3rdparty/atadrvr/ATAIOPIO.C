@@ -138,19 +138,20 @@ unsigned char pio_inbyte( unsigned int addr )
       // instructions. You must use Borland TASM as is shown
       // in the EXAMPLE1.MAK or EXAMPLE2.MAK "make files".
 
-      asm   .386
+       _asm {
+           .386
 
-      asm   push  ax
-      asm   push  dx
+           push  ax
+           push  dx
 
-      asm   mov   dx,regAddr
+           mov   dx,regAddr
 
-      asm   in    al,dx
-      asm   mov   uc,al
+           in    al,dx
+           mov   uc,al
 
-      asm   pop   dx
-      asm   pop   ax
-
+           pop   dx
+           pop   ax
+       }
    }
    pio_last_read[ addr ] = uc;
    trc_llt( addr, uc, TRC_LLT_INB );
@@ -175,19 +176,20 @@ void pio_outbyte( unsigned int addr, unsigned char data )
    {
       // outportb( regAddr, data );
 
-      asm   .386
+       _asm {
+           .386
 
-      asm   push  ax
-      asm   push  dx
+           push  ax
+           push  dx
 
-      asm   mov   dx,regAddr
-      asm   mov   al,data
+           mov   dx,regAddr
+           mov   al,data
 
-      asm   out   dx,al
+           out   dx,al
 
-      asm   pop   dx
-      asm   pop   ax
-
+           pop   dx
+           pop   ax
+       }
    }
    pio_last_write[ addr ] = data;
    trc_llt( addr, data, TRC_LLT_OUTB );
@@ -212,19 +214,20 @@ unsigned int pio_inword( unsigned int addr )
    {
       // ui = inport( regAddr );
 
-      asm   .386
+       _asm {
+           .386
 
-      asm   push  ax
-      asm   push  dx
+           push  ax
+           push  dx
 
-      asm   mov   dx,regAddr
+           mov   dx,regAddr
 
-      asm   in    ax,dx
-      asm   mov   ui,ax
+           in    ax,dx
+           mov   ui,ax
 
-      asm   pop   dx
-      asm   pop   ax
-
+           pop   dx
+           pop   ax
+       }
    }
    trc_llt( addr, 0, TRC_LLT_INW );
    return ui;
@@ -248,19 +251,20 @@ void pio_outword( unsigned int addr, unsigned int data )
    {
       // outport( regAddr, data );
 
-      asm   .386
+       _asm {
+           .386
 
-      asm   push  ax
-      asm   push  dx
+           push  ax
+           push  dx
 
-      asm   mov   dx,regAddr
-      asm   mov   ax,data
+           mov   dx,regAddr
+           mov   ax,data
 
-      asm   out   dx,ax
+           out   dx,ax
 
-      asm   pop   dx
-      asm   pop   ax
-
+           pop   dx
+           pop   ax
+       }
    }
    trc_llt( addr, 0, TRC_LLT_OUTW );
 }
@@ -594,30 +598,32 @@ void pio_rep_inbyte( unsigned int addrDataReg,
    // bufSeg and bufOff should be normalized such
    // that bufOff is a value between 0 and 15 (0xf).
 
-   asm   .386
+   _asm {
+       .386
 
-   asm   push  ax
-   asm   push  cx
-   asm   push  dx
-   asm   push  di
-   asm   push  es
+       push  ax
+       push  cx
+       push  dx
+       push  di
+       push  es
 
-   asm   mov   ax,bufSeg
-   asm   mov   es,ax
-   asm   mov   di,bufOff
+       mov   ax,bufSeg
+       mov   es,ax
+       mov   di,bufOff
 
-   asm   mov   cx,bCnt
-   asm   mov   dx,dataRegAddr
+       mov   cx,bCnt
+       mov   dx,dataRegAddr
 
-   asm   cld
+       cld
 
-   asm   rep   insb
+       rep   insb
 
-   asm   pop   es
-   asm   pop   di
-   asm   pop   dx
-   asm   pop   cx
-   asm   pop   ax
+       pop   es
+       pop   di
+       pop   dx
+       pop   cx
+       pop   ax
+   }
 
    trc_llt( addrDataReg, 0, TRC_LLT_INSB );
 }
@@ -637,30 +643,32 @@ void pio_rep_outbyte( unsigned int addrDataReg,
    // bufSeg and bufOff should be normalized such
    // that bufOff is a value between 0 and 15 (0xf).
 
-   asm   .386
+   _asm {
+       .386
 
-   asm   push  ax
-   asm   push  cx
-   asm   push  dx
-   asm   push  si
-   asm   push  ds
+       push  ax
+       push  cx
+       push  dx
+       push  si
+       push  ds
 
-   asm   mov   ax,bufSeg
-   asm   mov   ds,ax
-   asm   mov   si,bufOff
+       mov   ax,bufSeg
+       mov   ds,ax
+       mov   si,bufOff
 
-   asm   mov   cx,bCnt
-   asm   mov   dx,dataRegAddr
+       mov   cx,bCnt
+       mov   dx,dataRegAddr
 
-   asm   cld
+       cld
 
-   asm   rep   outsb
+       rep   outsb
 
-   asm   pop   ds
-   asm   pop   si
-   asm   pop   dx
-   asm   pop   cx
-   asm   pop   ax
+       pop   ds
+       pop   si
+       pop   dx
+       pop   cx
+       pop   ax
+   }
 
    trc_llt( addrDataReg, 0, TRC_LLT_OUTSB );
 }
@@ -680,31 +688,32 @@ void pio_rep_inword( unsigned int addrDataReg,
    // bufSeg and bufOff should be normalized such
    // that bufOff is a value between 0 and 15 (0xf).
 
-   asm   .386
+   _asm {
+       .386
 
-   asm   push  ax
-   asm   push  cx
-   asm   push  dx
-   asm   push  di
-   asm   push  es
+       push  ax
+       push  cx
+       push  dx
+       push  di
+       push  es
 
-   asm   mov   ax,bufSeg
-   asm   mov   es,ax
-   asm   mov   di,bufOff
+       mov   ax,bufSeg
+       mov   es,ax
+       mov   di,bufOff
 
-   asm   mov   cx,wCnt
-   asm   mov   dx,dataRegAddr
+       mov   cx,wCnt
+       mov   dx,dataRegAddr
 
-   asm   cld
+       cld
 
-   asm   rep   insw
+       rep   insw
 
-   asm   pop   es
-   asm   pop   di
-   asm   pop   dx
-   asm   pop   cx
-   asm   pop   ax
-
+       pop   es
+       pop   di
+       pop   dx
+       pop   cx
+       pop   ax
+   }
    trc_llt( addrDataReg, 0, TRC_LLT_INSW );
 }
 
@@ -723,31 +732,32 @@ void pio_rep_outword( unsigned int addrDataReg,
    // bufSeg and bufOff should be normalized such
    // that bufOff is a value between 0 and 15 (0xf).
 
-   asm   .386
+   _asm {
+       .386
 
-   asm   push  ax
-   asm   push  cx
-   asm   push  dx
-   asm   push  si
-   asm   push  ds
+       push  ax
+       push  cx
+       push  dx
+       push  si
+       push  ds
 
-   asm   mov   ax,bufSeg
-   asm   mov   ds,ax
-   asm   mov   si,bufOff
+       mov   ax,bufSeg
+       mov   ds,ax
+       mov   si,bufOff
 
-   asm   mov   cx,wCnt
-   asm   mov   dx,dataRegAddr
+       mov   cx,wCnt
+       mov   dx,dataRegAddr
 
-   asm   cld
+       cld
 
-   asm   rep   outsw
+       rep   outsw
 
-   asm   pop   ds
-   asm   pop   si
-   asm   pop   dx
-   asm   pop   cx
-   asm   pop   ax
-
+       pop   ds
+       pop   si
+       pop   dx
+       pop   cx
+       pop   ax
+   }
    trc_llt( addrDataReg, 0, TRC_LLT_OUTSW );
 }
 
@@ -766,30 +776,32 @@ void pio_rep_indword( unsigned int addrDataReg,
    // bufSeg and bufOff should be normalized such
    // that bufOff is a value between 0 and 15 (0xf).
 
-   asm   .386
+   _asm {
+       .386
 
-   asm   push  ax
-   asm   push  cx
-   asm   push  dx
-   asm   push  di
-   asm   push  es
+       push  ax
+       push  cx
+       push  dx
+       push  di
+       push  es
 
-   asm   mov   ax,bufSeg
-   asm   mov   es,ax
-   asm   mov   di,bufOff
+       mov   ax,bufSeg
+       mov   es,ax
+       mov   di,bufOff
 
-   asm   mov   cx,dwCnt
-   asm   mov   dx,dataRegAddr
+       mov   cx,dwCnt
+       mov   dx,dataRegAddr
 
-   asm   cld
+       cld
 
-   asm   rep   insd
+       rep   insd
 
-   asm   pop   es
-   asm   pop   di
-   asm   pop   dx
-   asm   pop   cx
-   asm   pop   ax
+       pop   es
+       pop   di
+       pop   dx
+       pop   cx
+       pop   ax
+   }
 
    trc_llt( addrDataReg, 0, TRC_LLT_INSD );
 }
@@ -809,30 +821,32 @@ void pio_rep_outdword( unsigned int addrDataReg,
    // bufSeg and bufOff should be normalized such
    // that bufOff is a value between 0 and 15 (0xf).
 
-   asm   .386
+   _asm {
+       .386
 
-   asm   push  ax
-   asm   push  cx
-   asm   push  dx
-   asm   push  si
-   asm   push  ds
+       push  ax
+       push  cx
+       push  dx
+       push  si
+       push  ds
 
-   asm   mov   ax,bufSeg
-   asm   mov   ds,ax
-   asm   mov   si,bufOff
+       mov   ax,bufSeg
+       mov   ds,ax
+       mov   si,bufOff
 
-   asm   mov   cx,dwCnt
-   asm   mov   dx,dataRegAddr
+       mov   cx,dwCnt
+       mov   dx,dataRegAddr
 
-   asm   cld
+       cld
 
-   asm   rep   outsd
+       rep   outsd
 
-   asm   pop   ds
-   asm   pop   si
-   asm   pop   dx
-   asm   pop   cx
-   asm   pop   ax
+       pop   ds
+       pop   si
+       pop   dx
+       pop   cx
+       pop   ax
+   }
 
    trc_llt( addrDataReg, 0, TRC_LLT_OUTSD );
 }
