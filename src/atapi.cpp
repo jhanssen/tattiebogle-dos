@@ -26,7 +26,27 @@ static void ClearTrace(void)
     trc_llt_dump0();     // zero the low level trace
 }
 
-ATAPI* ATAPI::sInstance = 0;
+static void pause(void)
+{
+    // clear any queued up keys
+    while (kbhit())
+    {
+        if (getch() == 0)
+            getch();
+    }
+    // pause until key hit
+    printf("Press any key to continue...\n");
+    while (!kbhit())
+        /* do nothing */ ;
+    // clear any queued up keys
+    while (kbhit())
+    {
+        if (getch() == 0)
+            getch();
+    }
+}
+
+ATAPI* ATAPI::sInstance = NULL;
 
 ATAPI::ATAPI()
     : mDev(-1)
@@ -92,16 +112,16 @@ bool ATAPI::initialize(Controller controller, Device device)
 void ATAPI::destroy()
 {
     delete sInstance;
-    sInstance = 0;
+    sInstance = NULL;
 }
 
-long ATAPI::sendPacket(const unsigned char* cdb)
+long ATAPI::sendPacket(const unsigned char* cdb, int cdbLen)
 {
     cdbPtr = (unsigned char far*)cdb;
     memset(buffer, 0, sizeof(buffer));
     int rc = reg_packet(
         mDev,
-        12, FP_SEG(cdbPtr), FP_OFF(cdbPtr),
+        cdbLen, FP_SEG(cdbPtr), FP_OFF(cdbPtr),
         0,
         4096, FP_SEG(bufferPtr), FP_OFF(bufferPtr),
         0L    // lba for tracing
@@ -112,71 +132,51 @@ long ATAPI::sendPacket(const unsigned char* cdb)
     return reg_cmd_info.totalBytesXfer;
 }
 
-static void pause( void )
-{
-    // clear any queued up keys
-    while ( kbhit() )
-    {
-        if ( getch() == 0 )
-            getch();
-    }
-    // pause until key hit
-    printf( "Press any key to continue...\n" );
-    while ( ! kbhit() )
-        /* do nothing */ ;
-    // clear any queued up keys
-    while ( kbhit() )
-    {
-        if ( getch() == 0 )
-            getch();
-    }
-}
-
 void ATAPI::printError()
 {
     int lc = 0;
     unsigned char * cp;
 
-    printf( "ERROR !\n" );
+    printf("ERROR !\n");
 
     // display the command error information
     trc_err_dump1();           // start
-    while ( 1 )
+    while (1)
     {
         cp = trc_err_dump2();   // get and display a line
-        if ( cp == NULL )
+        if (cp == NULL)
             break;
-        printf( "* %s\n", cp );
+        printf("* %s\n", cp);
     }
     pause();
 
     // display the command history
     trc_cht_dump1();           // start
-    while ( 1 )
+    while (1)
     {
         cp = trc_cht_dump2();   // get and display a line
-        if ( cp == NULL )
+        if (cp == NULL)
             break;
-        printf( "* %s\n", cp );
+        printf("* %s\n", cp);
         lc ++ ;
-        if ( ! ( lc & 0x000f ) )
+        if (!(lc & 0x000f))
             pause();
     }
 
     // display the low level trace
     trc_llt_dump1();           // start
-    while ( 1 )
+    while (1)
     {
         cp = trc_llt_dump2();   // get and display a line
-        if ( cp == NULL )
+        if (cp == NULL)
             break;
-        printf( "* %s\n", cp );
+        printf("* %s\n", cp);
         lc ++ ;
-        if ( ! ( lc & 0x000f ) )
+        if (!(lc & 0x000f))
             pause();
     }
 
-    if ( lc & 0x000f )
+    if (lc & 0x000f)
         pause();
 }
 

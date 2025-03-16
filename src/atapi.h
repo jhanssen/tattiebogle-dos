@@ -21,7 +21,7 @@ public:
 
     static ATAPI* instance();
 
-    long sendPacket(const unsigned char* cdb);
+    long sendPacket(const unsigned char* cdb, int cdbLen);
     void printError();
 
     const unsigned char* responseData();

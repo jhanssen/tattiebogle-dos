@@ -20,7 +20,7 @@ int main(int, char**)
     cdb[0] = 0x12;    // Inquiry command code
     cdb[4] = 36;      // allocation length
 
-    long responseLength = atapi->sendPacket(cdb);
+    long responseLength = atapi->sendPacket(cdb, 12);
     if (responseLength == -1) {
         printf("ATAPI sendPacket failed\n");
         atapi->printError();
@@ -35,5 +35,6 @@ int main(int, char**)
     }
     printf("\n");
 
+    ATAPI::destroy();
     return 0;
 }
