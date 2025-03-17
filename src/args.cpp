@@ -102,7 +102,7 @@ int Args::argAsInt(const char* name) const
     arg.name = name;
     int index = mArgs.index(arg);
     if (index == -1 || mArgs[index].value == NULL) {
-        return -1;
+        return INT_MAX;
     }
     if (mArgs[index].valueInt == INT_MAX) {
         Arg* mutableArg = const_cast<Arg*>(&mArgs[index]);
