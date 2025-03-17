@@ -45,6 +45,7 @@ void Ini::parse()
         // process line from prev to nl
         // first, trim whitespace
         *nl = 0;
+        //printf("looking at line '%s'\n", prev);
         char* line = prev;
         while (*line == ' ' || *line == '\t') {
             line++;
@@ -54,7 +55,9 @@ void Ini::parse()
             end--;
         }
         *(end + 1) = 0;
+
         prev = nl + 1;
+        nl = strchr(prev, '\n');
 
         // check if this is a section
         if (*line == '[' && *(end) == ']') {
@@ -62,7 +65,11 @@ void Ini::parse()
             *end = 0;
             Section section;
             section.name = line + 1;
+            //printf("got section '%s'\n", section.name);
             mSections.insert(section);
+        } else if (*line == '#' || *line == ';') {
+            // this is a comment
+            continue;
         } else {
             // this is a key=value pair
             char* eq = strchr(line, '=');
@@ -81,6 +88,7 @@ void Ini::parse()
                 while (*value == ' ' || *value == '\t') {
                     value++;
                 }
+                //printf("got key/value '%s' '%s'\n", key, value);
 
                 // add entry to the current section
                 Entry entry;
