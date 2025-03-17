@@ -1,5 +1,6 @@
 #include "atapi.h"
 #include "args.h"
+#include "ini.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
@@ -17,26 +18,34 @@ int main(int argc, char** argv)
 
     if (args.hasArg("h") || args.hasArg("?") || args.hasArg("help")) {
         printf("Usage: cdemu [/C <controller>] [/D <device>]\n");
-        printf("  /C <controller>  's' for secondary, default is primary\n");
-        printf("  /D <device>      's' for slave, default is master\n");
+        printf("  /C <controller>  'S' for secondary, default is primary\n");
+        printf("  /D <device>      'S' for slave, default is master\n");
         return 0;
     }
+
+    Ini ini("cdemu.ini");
 
     ATAPI::Controller controller = ATAPI::PRIMARY;
     ATAPI::Device device = ATAPI::MASTER;
 
+    const char* cini = ini.asString("cdemu", "controller");
+    if (cini != NULL && tolower(cini[0]) == 's') {
+        controller = ATAPI::SECONDARY;
+    }
+
+    const char* dini = ini.asString("cdemu", "device");
+    if (dini != NULL && tolower(dini[0]) == 's') {
+        device = ATAPI::SLAVE;
+    }
+
     const char* carg = args.argAsString("c");
-    if (carg != NULL) {
-        if (tolower(carg[0]) == 's') {
-            controller = ATAPI::SECONDARY;
-        }
+    if (carg != NULL && tolower(carg[0]) == 's') {
+        controller = ATAPI::SECONDARY;
     }
 
     const char* darg = args.argAsString("d");
-    if (darg != NULL) {
-        if (tolower(darg[0]) == 's') {
-            device = ATAPI::SLAVE;
-        }
+    if (darg != NULL && tolower(darg[0]) == 's') {
+        device = ATAPI::SLAVE;
     }
 
     printf("Using %s controller, %s device\n",

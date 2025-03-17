@@ -17,10 +17,7 @@ Args::Args(int argc, char** argv)
                 Arg& arg = mArgs[mArgs.entries() - 1];
 
                 // lower case the name
-                arg.name = strdup(&argv[i - 1][isOption]);
-                for (char* p = (char*)arg.name; *p; ++p) {
-                    *p = tolower(*p);
-                }
+                arg.name = &argv[i - 1][isOption];
                 arg.value = NULL;
                 arg.valueInt = INT_MAX;
             }
@@ -34,10 +31,7 @@ Args::Args(int argc, char** argv)
                 Arg& arg = mArgs[mArgs.entries() - 1];
 
                 // lower case the name
-                arg.name = strdup(&argv[i - 1][isOption]);
-                for (char* p = (char*)arg.name; *p; ++p) {
-                    *p = tolower(*p);
-                }
+                arg.name = &argv[i - 1][isOption];
                 arg.value = argv[i];
                 arg.valueInt = INT_MAX;
 
@@ -48,6 +42,7 @@ Args::Args(int argc, char** argv)
                 FreeArg& arg = mFreeArgs[mArgs.entries() - 1];
 
                 arg.value = argv[i];
+                arg.valueInt = INT_MAX;
             }
             break;
         }
@@ -59,10 +54,7 @@ Args::Args(int argc, char** argv)
         Arg& arg = mArgs[mArgs.entries() - 1];
 
         // lower case the name
-        arg.name = strdup(&argv[argc - 1][isOption]);
-        for (char* p = (char*)arg.name; *p; ++p) {
-            *p = tolower(*p);
-        }
+        arg.name = &argv[argc - 1][isOption];
         arg.value = NULL;
         arg.valueInt = INT_MAX;
     }
@@ -70,10 +62,6 @@ Args::Args(int argc, char** argv)
 
 Args::~Args()
 {
-    // free all names
-    for (int i = 0; i < mArgs.entries(); ++i) {
-        free((void*)mArgs[i].name);
-    }
 }
 
 int Args::freeArgs() const
@@ -81,12 +69,30 @@ int Args::freeArgs() const
     return mFreeArgs.entries();
 }
 
-const char* Args::freeArg(int index) const
+const char* Args::freeArgAsString(int index) const
 {
     if (index < 0 || index >= mFreeArgs.entries()) {
         return NULL;
     }
     return mFreeArgs[index].value;
+}
+
+int Args::freeArgAsInt(int index) const
+{
+    if (index < 0 || index >= mFreeArgs.entries()) {
+        return NULL;
+    }
+    if (mFreeArgs[index].valueInt == INT_MAX) {
+        FreeArg* mutableArg = const_cast<FreeArg*>(&mFreeArgs[index]);
+        char* end;
+        long val = strtol(mFreeArgs[index].value, &end, 10);
+        if (*end == '\0') {
+            mutableArg->valueInt = static_cast<int>(val);
+        } else {
+            mutableArg->valueInt = INT_MIN;
+        }
+    }
+    return mFreeArgs[index].valueInt != INT_MIN ? mFreeArgs[index].valueInt : INT_MAX;
 }
 
 bool Args::hasArg(const char* name) const
@@ -106,9 +112,15 @@ int Args::argAsInt(const char* name) const
     }
     if (mArgs[index].valueInt == INT_MAX) {
         Arg* mutableArg = const_cast<Arg*>(&mArgs[index]);
-        mutableArg->valueInt = atoi(mArgs[index].value);
+        char* end;
+        long val = strtol(mArgs[index].value, &end, 10);
+        if (*end == '\0') {
+            mutableArg->valueInt = static_cast<int>(val);
+        } else {
+            mutableArg->valueInt = INT_MIN;
+        }
     }
-    return mArgs[index].valueInt;
+    return mArgs[index].valueInt != INT_MIN ? mArgs[index].valueInt : INT_MAX;
 }
 
 const char* Args::argAsString(const char* name) const
@@ -120,4 +132,14 @@ const char* Args::argAsString(const char* name) const
         return NULL;
     }
     return mArgs[index].value;
+}
+
+bool Args::Arg::operator==(const Arg& other) const
+{
+    return !strcasecmp(name, other.name);
+}
+
+bool Args::FreeArg::operator==(const FreeArg& other) const
+{
+    return !strcasecmp(value, other.value);
 }

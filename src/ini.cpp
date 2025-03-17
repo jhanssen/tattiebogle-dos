@@ -124,6 +124,11 @@ const char* Ini::asString(const char* section, const char* key) const
     return entry->value;
 }
 
+const char* Ini::asString(const char* key) const
+{
+    return asString(NULL, key);
+}
+
 int Ini::asInt(const char* section, const char* key) const
 {
     const Entry* entry = findEntry(section, key);
@@ -132,7 +137,28 @@ int Ini::asInt(const char* section, const char* key) const
     }
     if (entry->valueInt == INT_MAX) {
         Entry* mutableEntry = const_cast<Entry*>(entry);
-        mutableEntry->valueInt = atoi(entry->value);
+        char* end;
+        long val = strtol(entry->value, &end, 10);
+        if (*end == '\0') {
+            mutableEntry->valueInt = static_cast<int>(val);
+        } else {
+            mutableEntry->valueInt = INT_MIN;
+        }
     }
-    return entry->valueInt;
+    return entry->valueInt != INT_MIN ? entry->valueInt : INT_MAX;
+}
+
+int Ini::asInt(const char* key) const
+{
+    return asInt(NULL, key);
+}
+
+bool Ini::Entry::operator==(const Entry& other) const
+{
+    return !strcasecmp(key, other.key);
+}
+
+bool Ini::Section::operator==(const Section& other) const
+{
+    return (name == NULL && other.name == NULL) || !strcasecmp(name, other.name);
 }

@@ -1,7 +1,7 @@
 #ifndef ARGS_H
 #define ARGS_H
 
-#include <string.h>
+#include <strings.h>
 #include <wcvector.h>
 
 class Args
@@ -11,7 +11,8 @@ public:
     ~Args();
 
     int freeArgs() const;
-    const char* freeArg(int index) const;
+    const char* freeArgAsString(int index) const;
+    int freeArgAsInt(int index) const;
 
     bool hasArg(const char* name) const;
     int argAsInt(const char* name) const;
@@ -23,17 +24,14 @@ private:
         const char* value;
         int valueInt;
 
-        bool operator==(const Arg& other) const {
-            return !strcmp(name, other.name);
-        }
+        bool operator==(const Arg& other) const;
     };
 
     struct FreeArg {
         const char* value;
+        int valueInt;
 
-        bool operator==(const FreeArg& other) const {
-            return !strcmp(value, other.value);
-        }
+        bool operator==(const FreeArg& other) const;
     };
 
     WCValOrderedVector<Arg> mArgs;
