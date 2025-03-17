@@ -168,5 +168,8 @@ bool Ini::Entry::operator==(const Entry& other) const
 
 bool Ini::Section::operator==(const Section& other) const
 {
-    return (name == NULL && other.name == NULL) || !strcasecmp(name, other.name);
+    if (name == NULL || other.name == NULL) {
+        return name == other.name;
+    }            
+    return !strcasecmp(name, other.name);
 }
