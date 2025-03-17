@@ -3,6 +3,7 @@
 #include "ini.h"
 #include <ctype.h>
 #include <direct.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
@@ -93,9 +94,13 @@ int main(int argc, char** argv)
     Args args(argc, argv);
 
     if (args.hasArg("h") || args.hasArg("?") || args.hasArg("help")) {
-        printf("Usage: cdemu [/C <controller>] [/D <device>]\n");
+        printf("Usage: cdemu [/C <controller>] [/D <device>] <command> [command args...]\n");
         printf("  /C <controller>  'P' for primary, 'S' for secondary, default is primary\n");
         printf("  /D <device>      'M' for master, 'S' for slave, default is master\n");
+        printf("\n");
+        printf("Commands:\n");
+        printf("  listimg          List images\n");
+        printf("  setimg <number>  Set active image\n");
         return 0;
     }
 
@@ -116,9 +121,9 @@ int main(int argc, char** argv)
     // check ini file first
     const char* cini = ini.asString("cdemu", "controller");
     if (cini != NULL) {
-        if (strcasecmp(cini, "primary") == 0) {
+        if (!strcasecmp(cini, "primary")) {
             controller = ATAPI::PRIMARY;
-        } else if (strcasecmp(cini, "secondary") == 0) {
+        } else if (!strcasecmp(cini, "secondary")) {
             controller = ATAPI::SECONDARY;
         } else {
             printf("Invalid controller in ini file: '%s'\n", cini);
@@ -128,9 +133,9 @@ int main(int argc, char** argv)
 
     const char* dini = ini.asString("cdemu", "device");
     if (dini != NULL) {
-        if (strcasecmp(dini, "master") == 0) {
+        if (!strcasecmp(dini, "master")) {
             device = ATAPI::MASTER;
-        } else if (strcasecmp(dini, "slave") == 0) {
+        } else if (!strcasecmp(dini, "slave")) {
             device = ATAPI::SLAVE;
         } else {
             printf("Invalid device in ini file: '%s'\n", dini);
@@ -182,7 +187,7 @@ int main(int argc, char** argv)
     cdb[0] = 0x12;    // Inquiry command code
     cdb[4] = 36;      // allocation length
 
-    long responseLength = atapi->sendPacket(cdb, 12);
+    const long responseLength = atapi->sendPacket(cdb, 12);
     if (responseLength == -1) {
         printf("ATAPI inqury failed\n");
         atapi->printError();
@@ -206,8 +211,31 @@ int main(int argc, char** argv)
             return 4;
         }
     }
-    printf("\n");
 
+    const int numFreeArgs = args.freeArgs();
+
+    int off = args.findFreeArg("listimg");
+    if (off != -1) {
+        const int ret = Tattiebogle::listImages();
+        ATAPI::destroy();
+        return ret;
+    }
+
+    off = args.findFreeArg("setimg");
+    if (off + 1 < numFreeArgs) {
+        int ret = 0;
+        const int imgNo = args.freeArgAsInt(off + 1);
+        if (imgNo != INT_MAX) {
+            ret = Tattiebogle::setImage(imgNo);
+        } else {
+            printf("setImage: Invalid image number\n");
+            ret = 5;
+        }
+        ATAPI::destroy();
+        return ret;
+    }
+
+    printf("No command given, exiting\n");
     ATAPI::destroy();
     return 0;
 }

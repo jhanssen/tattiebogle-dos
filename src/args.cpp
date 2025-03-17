@@ -80,19 +80,25 @@ const char* Args::freeArgAsString(int index) const
 int Args::freeArgAsInt(int index) const
 {
     if (index < 0 || index >= mFreeArgs.entries()) {
-        return NULL;
+        return INT_MAX;
     }
     if (mFreeArgs[index].valueInt == INT_MAX) {
-        FreeArg* mutableArg = const_cast<FreeArg*>(&mFreeArgs[index]);
         char* end;
         long val = strtol(mFreeArgs[index].value, &end, 10);
         if (*end == '\0') {
-            mutableArg->valueInt = static_cast<int>(val);
+            mFreeArgs[index].valueInt = static_cast<int>(val);
         } else {
-            mutableArg->valueInt = INT_MIN;
+            mFreeArgs[index].valueInt = INT_MIN;
         }
     }
     return mFreeArgs[index].valueInt != INT_MIN ? mFreeArgs[index].valueInt : INT_MAX;
+}
+
+int Args::findFreeArg(const char* name) const
+{
+    FreeArg arg;
+    arg.value = name;
+    return mFreeArgs.index(arg);
 }
 
 bool Args::hasArg(const char* name) const

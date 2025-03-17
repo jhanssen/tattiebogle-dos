@@ -11,6 +11,7 @@ public:
     ~Args();
 
     int freeArgs() const;
+    int findFreeArg(const char* name) const;
     const char* freeArgAsString(int index) const;
     int freeArgAsInt(int index) const;
 
